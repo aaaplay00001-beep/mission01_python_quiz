@@ -1,4 +1,5 @@
 class Quiz:
+    
     def __init__(self, question, choices, answer):
         self.question = question
         self.choices = choices
@@ -16,7 +17,42 @@ class Quiz:
     def is_correct(self, user_answer):
         return self.answer == user_answer
     
-    
+
+def create_default_quizzes():
+    return [
+        Quiz(
+            "강아지의 정상 체온은 대략 몇 도일까요?",
+            ["36도", "37도", "38~39도", "41도"],
+            3,
+        ),
+        Quiz(
+            "강아지에게 먹이면 위험한 음식은?",
+            ["삶은 닭가슴살", "초콜릿", "당근", "오이"],
+            2,
+        ),
+        Quiz(
+            "다 자란 강아지(성견)의 이빨은 보통 몇 개일까요?",
+            ["28개", "32개", "42개", "52개"],
+            3,
+        ),
+        Quiz(
+            "세계에서 가장 빠른 견종으로 알려진 것은?",
+            ["푸들", "그레이하운드", "불독", "말티즈"],
+            2,
+        ),
+        Quiz(
+            "강아지의 평균 임신 기간은 약 며칠일까요?",
+            ["약 30일", "약 63일", "약 90일", "약 120일"],
+            2,
+        ),
+        Quiz(
+            "대한민국 천연기념물 제53호로 지정된 토종 견종은?",
+            ["진돗개", "푸들", "비글", "치와와"],
+            1,
+        ),
+    ]
+
+
 def show_menu():
     print("=" * 40)
     print("        🎯 나만의 퀴즈 게임 🎯")
