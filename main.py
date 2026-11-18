@@ -42,4 +42,11 @@ def main():
             print(f"{choice}번 기능은 아직 준비 중입니다.")
 
 
-main()
+def run():
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        print("\n\n⚠️ 프로그램이 중단되었습니다. 안전하게 종료합니다.")
+
+
+run()
