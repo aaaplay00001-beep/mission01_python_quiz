@@ -85,12 +85,60 @@ def get_menu_choice():
         return number
 
 
+def get_answer_choice():
+    while True:
+        text = input("정답 입력: ").strip()
+
+        if text == "":
+            print("⚠️ 입력이 비어 있습니다. 1-4 사이의 숫자를 입력하세요.")
+            continue
+
+        if not text.isdigit():
+            print("⚠️ 잘못된 입력입니다. 1-4 사이의 숫자를 입력하세요.")
+            continue
+
+        number = int(text)
+        if number < 1 or number > 4:
+            print("⚠️ 잘못된 입력입니다. 1-4 사이의 숫자를 입력하세요.")
+            continue
+
+        return number
+
+
+def play_quiz(quizzes):
+    if len(quizzes) == 0:
+        print("⚠️ 등록된 퀴즈가 없습니다.")
+        return
+
+    print(f"\n📝 퀴즈를 시작합니다! (총 {len(quizzes)}문제)\n")
+
+    correct_count = 0
+    for number, quiz in enumerate(quizzes, start=1):
+        quiz.show(number)
+        user_answer = get_answer_choice()
+
+        if quiz.is_correct(user_answer):
+            print("✅ 정답입니다!\n")
+            correct_count += 1
+        else:
+            print(f"❌ 오답입니다. 정답은 {quiz.answer}번입니다.\n")
+
+    score = int(correct_count / len(quizzes) * 100)
+    print("=" * 40)
+    print(f"🏆 결과: {len(quizzes)}문제 중 {correct_count}문제 정답! ({score}점)")
+    print("=" * 40)
+
+    
 def main():
+    quizzes = create_default_quizzes()
+
     while True:
         show_menu()
         choice = get_menu_choice()
 
-        if choice == 5:
+        if choice == 1:
+            play_quiz(quizzes)
+        elif choice == 5:
             print("프로그램을 종료합니다. 안녕히 가세요!")
             break
         else:
