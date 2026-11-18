@@ -141,6 +141,31 @@ def show_quiz_list(quizzes):
     print("-" * 40)
 
 
+def get_nonempty_text(prompt):
+    while True:
+        text = input(prompt).strip()
+        if text == "":
+            print("⚠️ 입력이 비어 있습니다. 다시 입력하세요.")
+            continue
+        return text
+
+
+def add_quiz(quizzes):
+    print("\n📌 새로운 퀴즈를 추가합니다.\n")
+
+    question = get_nonempty_text("문제를 입력하세요: ")
+
+    choices = []
+    for i in range(1, 5):
+        choice = get_nonempty_text(f"선택지 {i}: ")
+        choices.append(choice)
+
+    answer = get_answer_choice()
+
+    quizzes.append(Quiz(question, choices, answer))
+    print("\n✅ 퀴즈가 추가되었습니다!")
+    
+
 def main():
     quizzes = create_default_quizzes()
 
@@ -150,6 +175,8 @@ def main():
 
         if choice == 1:
             play_quiz(quizzes)
+        elif choice == 2:
+            add_quiz(quizzes)
         elif choice == 3:
             show_quiz_list(quizzes)
         elif choice == 5:
