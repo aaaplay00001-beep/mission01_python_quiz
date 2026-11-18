@@ -53,3 +53,4 @@ python main.py
 
 - `quizzes`: 퀴즈 목록 (문제, 선택지 4개, 정답 번호 1~4)
 - `best_score`: 최고 점수 정보. 아직 풀지 않았다면 `null`
+- clone/pull 실습: 별도 폴더에서 수정 후 push했습니다.
