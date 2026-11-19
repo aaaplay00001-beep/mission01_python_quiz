@@ -5,10 +5,11 @@ import random
 
 class Quiz:
     
-    def __init__(self, question, choices, answer):
+    def __init__(self, question, choices, answer, hint=""):
         self.question = question
         self.choices = choices
         self.answer = answer
+        self.hint = hint
 
     def show(self, number):
         print("-" * 40)
@@ -27,11 +28,17 @@ class Quiz:
             "question": self.question,
             "choices": self.choices,
             "answer": self.answer,
+            "hint": self.hint,
         }
 
     @staticmethod
     def from_dict(data):
-        return Quiz(data["question"], data["choices"], data["answer"])
+        return Quiz(
+            data["question"],
+            data["choices"],
+            data["answer"],
+            data.get("hint", ""),
+        )
     
 
 STATE_FILE = "state.json"
@@ -43,31 +50,37 @@ def create_default_quizzes():
             "강아지의 정상 체온은 대략 몇 도일까요?",
             ["36도", "37도", "38~39도", "41도"],
             3,
+            "사람 체온보다 조금 높아요.",
         ),
         Quiz(
             "강아지에게 먹이면 위험한 음식은?",
             ["삶은 닭가슴살", "초콜릿", "당근", "오이"],
             2,
+            "사람이 좋아하는 달콤한 간식이에요.",
         ),
         Quiz(
             "다 자란 강아지(성견)의 이빨은 보통 몇 개일까요?",
             ["28개", "32개", "42개", "52개"],
             3,
+            "사람 어른(32개)보다 많아요.",
         ),
         Quiz(
             "세계에서 가장 빠른 견종으로 알려진 것은?",
             ["푸들", "그레이하운드", "불독", "말티즈"],
             2,
+            "경주에 쓰이는 날씬하고 다리가 긴 견종이에요.",
         ),
         Quiz(
             "강아지의 평균 임신 기간은 약 며칠일까요?",
             ["약 30일", "약 63일", "약 90일", "약 120일"],
             2,
+            "대략 2개월 정도예요.",
         ),
         Quiz(
             "대한민국 천연기념물 제53호로 지정된 토종 견종은?",
             ["진돗개", "푸들", "비글", "치와와"],
             1,
+            "전라남도의 섬 이름이 붙은 견종이에요.",
         ),
     ]
 
@@ -124,6 +137,31 @@ def get_answer_choice():
 
         return number
 
+
+def get_answer_choice_with_hint(quiz):
+    while True:
+        text = input("정답 입력 (힌트는 0): ").strip()
+
+        if text == "":
+            print("⚠️ 입력이 비어 있습니다. 1-4 사이의 숫자를 입력하세요.")
+            continue
+
+        if not text.isdigit():
+            print("⚠️ 잘못된 입력입니다. 1-4 사이의 숫자를 입력하세요.")
+            continue
+
+        number = int(text)
+        if number == 0:
+            if quiz.hint == "":
+                print("⚠️ 이 문제는 힌트가 없습니다.")
+                continue
+            return 0
+        if number < 1 or number > 4:
+            print("⚠️ 잘못된 입력입니다. 1-4 사이의 숫자를 입력하세요.")
+            continue
+
+        return number
+    
 
 def get_nonempty_text(prompt):
     while True:
@@ -223,19 +261,30 @@ class QuizGame:
         print(f"\n📝 퀴즈를 시작합니다! (총 {count}문제)\n")
 
         correct_count = 0
+        score_points = 0.0
         shuffled_quizzes = random.sample(self.quizzes, count)
         for number, quiz in enumerate(shuffled_quizzes, start=1):
             quiz.show(number)
-            user_answer = get_answer_choice()
+            used_hint = False
+            user_answer = get_answer_choice_with_hint(quiz)
+            if user_answer == 0:
+                used_hint = True
+                print(f"💡 힌트: {quiz.hint}\n")
+                user_answer = get_answer_choice()
 
             if quiz.is_correct(user_answer):
-                print("✅ 정답입니다!\n")
                 correct_count += 1
+                if used_hint:
+                    score_points += 0.5
+                    print("✅ 정답입니다! (힌트 사용: 0.5점 처리)\n")
+                else:
+                    score_points += 1
+                    print("✅ 정답입니다!\n")
             else:
                 print(f"❌ 오답입니다. 정답은 {quiz.answer}번입니다.\n")
 
         total = count
-        score = int(correct_count / total * 100)
+        score = int(score_points / total * 100)
         print("=" * 40)
         print(f"🏆 결과: {total}문제 중 {correct_count}문제 정답! ({score}점)")
 
@@ -244,6 +293,7 @@ class QuizGame:
             print("🎉 새로운 최고 점수입니다!")
             self.save_state()
         print("=" * 40)
+
 
     def add_quiz(self):
         print("\n📌 새로운 퀴즈를 추가합니다.\n")
@@ -255,8 +305,9 @@ class QuizGame:
             choices.append(get_nonempty_text(f"선택지 {i}: "))
 
         answer = get_answer_choice()
+        hint = input("힌트 (없으면 Enter): ").strip()
 
-        self.quizzes.append(Quiz(question, choices, answer))
+        self.quizzes.append(Quiz(question, choices, answer, hint))
         self.save_state()
         print("\n✅ 퀴즈가 추가되었습니다!")
 
