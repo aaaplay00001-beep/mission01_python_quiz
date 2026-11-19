@@ -71,5 +71,13 @@
         "score": 100,
         "correct": 7,
         "total": 7
-    }
+    },
+    "history": [
+        {
+            "played_at": "2026-11-19 15:33:13",
+            "total": 6,
+            "correct": 6,
+            "score": 100
+        }
+    ]
 }
