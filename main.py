@@ -133,6 +133,26 @@ def get_nonempty_text(prompt):
         return text
 
 
+def get_quiz_count(max_count):
+    while True:
+        text = input(f"풀 문제 수를 입력하세요 (1-{max_count}): ").strip()
+
+        if text == "":
+            print(f"⚠️ 입력이 비어 있습니다. 1-{max_count} 사이의 숫자를 입력하세요.")
+            continue
+
+        if not text.isdigit():
+            print(f"⚠️ 잘못된 입력입니다. 1-{max_count} 사이의 숫자를 입력하세요.")
+            continue
+
+        number = int(text)
+        if number < 1 or number > max_count:
+            print(f"⚠️ 잘못된 입력입니다. 1-{max_count} 사이의 숫자를 입력하세요.")
+            continue
+
+        return number
+
+    
 class QuizGame:
     def __init__(self):
         self.quizzes = create_default_quizzes()
@@ -177,10 +197,11 @@ class QuizGame:
             print("⚠️ 등록된 퀴즈가 없습니다.")
             return
 
-        print(f"\n📝 퀴즈를 시작합니다! (총 {len(self.quizzes)}문제)\n")
+        count = get_quiz_count(len(self.quizzes))
+        print(f"\n📝 퀴즈를 시작합니다! (총 {count}문제)\n")
 
         correct_count = 0
-        shuffled_quizzes = random.sample(self.quizzes, len(self.quizzes))
+        shuffled_quizzes = random.sample(self.quizzes, count)
         for number, quiz in enumerate(shuffled_quizzes, start=1):
             quiz.show(number)
             user_answer = get_answer_choice()
@@ -191,7 +212,7 @@ class QuizGame:
             else:
                 print(f"❌ 오답입니다. 정답은 {quiz.answer}번입니다.\n")
 
-        total = len(self.quizzes)
+        total = count
         score = int(correct_count / total * 100)
         print("=" * 40)
         print(f"🏆 결과: {total}문제 중 {correct_count}문제 정답! ({score}점)")
