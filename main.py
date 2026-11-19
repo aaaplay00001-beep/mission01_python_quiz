@@ -1,6 +1,7 @@
 import json
 import os
 import random
+from datetime import datetime
 
 
 class Quiz:
@@ -94,7 +95,8 @@ def show_menu():
     print("3. 퀴즈 목록")
     print("4. 점수 확인")
     print("5. 퀴즈 삭제")
-    print("6. 종료")
+    print("6. 게임 기록")
+    print("7. 종료")
     print("=" * 40)
 
 
@@ -103,16 +105,16 @@ def get_menu_choice():
         text = input("선택: ").strip()
 
         if text == "":
-            print("⚠️ 입력이 비어 있습니다. 1-6 사이의 숫자를 입력하세요.")
+            print("⚠️ 입력이 비어 있습니다. 1-7 사이의 숫자를 입력하세요.")
             continue
 
         if not text.isdigit():
-            print("⚠️ 잘못된 입력입니다. 1-6 사이의 숫자를 입력하세요.")
+            print("⚠️ 잘못된 입력입니다. 1-7 사이의 숫자를 입력하세요.")
             continue
 
         number = int(text)
-        if number < 1 or number > 6:
-            print("⚠️ 잘못된 입력입니다. 1-6 사이의 숫자를 입력하세요.")
+        if number < 1 or number > 7:
+            print("⚠️ 잘못된 입력입니다. 1-7 사이의 숫자를 입력하세요.")
             continue
 
         return number
@@ -217,6 +219,7 @@ class QuizGame:
     def __init__(self):
         self.quizzes = create_default_quizzes()
         self.best_score = None
+        self.history = []
         self.load_state()
 
 
@@ -229,6 +232,7 @@ class QuizGame:
                 data = json.load(f)
             quizzes = [Quiz.from_dict(item) for item in data["quizzes"]]
             best_score = data["best_score"]
+            history = data.get("history", [])
         except (OSError, ValueError, KeyError, TypeError):
             print("⚠️ 저장 파일이 손상되어 기본 데이터로 초기화합니다.")
             self.save_state()
@@ -236,6 +240,7 @@ class QuizGame:
 
         self.quizzes = quizzes
         self.best_score = best_score
+        self.history = history
         score_text = "없음" if best_score is None else f"{best_score['score']}점"
         print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(quizzes)}개, 최고점수 {score_text})")
 
@@ -244,6 +249,7 @@ class QuizGame:
         data = {
             "quizzes": [quiz.to_dict() for quiz in self.quizzes],
             "best_score": self.best_score,
+            "history": self.history,
         }
         try:
             with open(STATE_FILE, "w", encoding="utf-8") as f:
@@ -287,6 +293,13 @@ class QuizGame:
         score = int(score_points / total * 100)
         print("=" * 40)
         print(f"🏆 결과: {total}문제 중 {correct_count}문제 정답! ({score}점)")
+        self.history.append({
+            "played_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "total": total,
+            "correct": correct_count,
+            "score": score,
+        })
+        self.save_state()
 
         if self.best_score is None or score > self.best_score["score"]:
             self.best_score = {"score": score, "correct": correct_count, "total": total}
@@ -342,6 +355,20 @@ class QuizGame:
         print(f"\n🏆 최고 점수: {self.best_score['score']}점 "
               f"({self.best_score['total']}문제 중 {self.best_score['correct']}문제 정답)")
 
+    def show_history(self):
+        if len(self.history) == 0:
+            print("\n⚠️ 아직 게임 기록이 없습니다.")
+            return
+
+        print(f"\n📜 게임 기록 (총 {len(self.history)}회)\n")
+        print("-" * 40)
+        for number, record in enumerate(self.history, start=1):
+            print(
+                f"[{number}] {record['played_at']} | "
+                f"{record['total']}문제 중 {record['correct']}문제 | {record['score']}점"
+            )
+        print("-" * 40)
+        
     def run(self):
         while True:
             show_menu()
@@ -358,6 +385,8 @@ class QuizGame:
             elif choice == 5:
                 self.delete_quiz()
             elif choice == 6:
+                self.show_history()
+            elif choice == 7:
                 self.save_state()
                 print("프로그램을 종료합니다. 안녕히 가세요!")
                 break
