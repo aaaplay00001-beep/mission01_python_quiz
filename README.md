@@ -219,6 +219,32 @@ mission01_python_quiz/
 ### clone / pull 실습
 다른 폴더(`quiz-game-clone`)에 저장소를 `clone`하고, README를 수정해서 `push`한 뒤, 원래 폴더에서 `pull`로 변경 사항을 가져와 반영되는 것을 확인했습니다.
 
+### 커밋 수 증빙
+총 **32개**의 커밋을 만들었습니다. (과제 기준: 10개 이상)
+
+```bash
+git rev-list --count HEAD
+```
+
+대표 커밋 로그 (`git log --oneline` 일부):
+
+```
+Feat: 메뉴 기능 구현
+Feat: Quiz 클래스 작성
+Feat: 강아지 주제 기본 퀴즈 데이터 추가
+Feat: 퀴즈 출제 기능 구현
+Feat: 퀴즈 목록 기능 구현
+Feat: 퀴즈 추가 기능 구현
+Feat: 점수 확인 및 최고 점수 갱신 기능 구현
+Refactor: QuizGame 클래스로 책임 분리
+Feat: state.json 저장/불러오기 구현
+Docs: README 작성
+```
+
+### 병합 방식과 충돌 사례
+- `git merge --no-ff`로 병합해서 "어느 브랜치를 합쳤는지"가 그래프에 남도록 했습니다. (rebase는 사용하지 않았습니다.)
+- 충돌 사례: 같은 `state.json`을 두 폴더(`quiz-game`, `quiz-game-clone`)에서 따로 바꿔 push하자 `rejected` 오류가 났습니다. `git pull --no-rebase origin main`으로 먼저 합친 뒤 다시 push해서 해결했습니다.
+
 ### Git 그래프
 
 가지가 갈라졌다가 합쳐지는 모양으로 브랜치 작업 기록을 볼 수 있습니다.
@@ -229,6 +255,48 @@ mission01_python_quiz/
 ![Git 그래프](docs/screenshots/git_graph.png)
 
 ---
+
+## 🆚 왜 함수 대신 클래스를 썼을까?
+
+| 구분 | 함수만 사용 | 클래스 사용 (이 프로젝트) |
+|---|---|---|
+| 데이터 관리 | `quizzes`, `best_score`를 함수끼리 계속 주고받아야 함 | `QuizGame`이 `self.quizzes`, `self.best_score`로 한곳에서 관리 |
+| 코드 찾기 | 함수가 많아지면 어느 게 어느 기능인지 헷갈림 | 퀴즈 관련은 `Quiz`, 게임 전체는 `QuizGame`으로 묶임 |
+| 확장 | 퀴즈에 힌트를 추가하면 여러 함수를 다 고쳐야 함 | `Quiz` 클래스만 고치면 됨 |
+
+실제로 처음에는 함수로 만들었다가, 값을 주고받는 코드가 복잡해져서 `QuizGame` 클래스로 정리(Refactor)했습니다.
+단점은 처음 배울 때 `self`와 `__init__` 개념이 어렵다는 점입니다.
+
+## 🏗️ 클래스 호출 흐름과 설계 이유
+
+```
+run() → QuizGame() 생성 → load_state()로 파일 읽기
+      → game.run() 메뉴 반복
+          ├ 1번 → play_quiz() → Quiz.show(), Quiz.is_correct()
+          ├ 2번 → add_quiz() → Quiz 만들기 → save_state()
+          └ 5번 → save_state() 후 종료
+```
+
+- **입력 검사**(`get_menu_choice` 등)와 **파일 저장/불러오기**(`save_state`, `load_state`)를 나눈 이유: 한 함수는 한 가지 일만 하도록(단일 책임 원칙) 해서, 문제가 생기면 어디를 고칠지 바로 알 수 있게 하기 위해서입니다.
+- **`best_score`를 딕셔너리로 중첩한 이유**: 점수만 저장하면 "몇 문제 중 몇 개"를 알 수 없고, 나중에 날짜 같은 항목을 추가하기 쉽습니다.
+
+## ⚠️ 한계와 개선 아이디어
+
+- **JSON 저장의 한계**: 퀴즈가 수만 개로 많아지면 매번 파일 전체를 읽고 써서 느려지고 메모리를 많이 씁니다. 대규모 데이터에는 SQLite 같은 데이터베이스가 더 적합합니다.
+- **백업 없음**: 파일이 손상되면 기본 퀴즈로 초기화되어 이전 데이터를 복구할 수 없습니다. 개선 방법: 손상 시 원본을 `state.json.bak`으로 보존하기.
+- **동시 실행/쓰기 중단**: 프로그램을 두 개 동시에 실행하거나 저장 중 꺼지면 파일이 깨질 수 있습니다. 개선 방법: 임시 파일에 쓴 뒤 교체하기.
+- **인코딩**: 한글이 깨지지 않도록 `encoding="utf-8"`로 저장하고, `ensure_ascii=False`로 한글을 `\uXXXX` 대신 그대로 적습니다.
+
+## 🔧 요구사항이 바뀌면 어디를 고치나? (수정 지점)
+
+| 바꾸고 싶은 것 | 수정할 파일 | 수정할 곳 |
+|---|---|---|
+| 기본 퀴즈 내용 | `main.py` | `create_default_quizzes()` |
+| 퀴즈에 힌트 추가 | `main.py` | `Quiz.__init__`, `show`, `to_dict`, `from_dict` |
+| 저장 항목 추가 (예: 점수 기록) | `main.py` | `save_state()`, `load_state()` |
+| 메뉴 추가 | `main.py` | `show_menu()`, `get_menu_choice()`, `QuizGame.run()` |
+| 점수 계산 방식 | `main.py` | `QuizGame.play_quiz()` |
+| 저장 파일 이름 | `main.py` | `STATE_FILE` |
 
 ## 📚 배운 점
 
