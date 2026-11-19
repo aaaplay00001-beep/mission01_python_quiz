@@ -80,7 +80,8 @@ def show_menu():
     print("2. 퀴즈 추가")
     print("3. 퀴즈 목록")
     print("4. 점수 확인")
-    print("5. 종료")
+    print("5. 퀴즈 삭제")
+    print("6. 종료")
     print("=" * 40)
 
 
@@ -89,16 +90,16 @@ def get_menu_choice():
         text = input("선택: ").strip()
 
         if text == "":
-            print("⚠️ 입력이 비어 있습니다. 1-5 사이의 숫자를 입력하세요.")
+            print("⚠️ 입력이 비어 있습니다. 1-6 사이의 숫자를 입력하세요.")
             continue
 
         if not text.isdigit():
-            print("⚠️ 잘못된 입력입니다. 1-5 사이의 숫자를 입력하세요.")
+            print("⚠️ 잘못된 입력입니다. 1-6 사이의 숫자를 입력하세요.")
             continue
 
         number = int(text)
-        if number < 1 or number > 5:
-            print("⚠️ 잘못된 입력입니다. 1-5 사이의 숫자를 입력하세요.")
+        if number < 1 or number > 6:
+            print("⚠️ 잘못된 입력입니다. 1-6 사이의 숫자를 입력하세요.")
             continue
 
         return number
@@ -136,6 +137,27 @@ def get_nonempty_text(prompt):
 def get_quiz_count(max_count):
     while True:
         text = input(f"풀 문제 수를 입력하세요 (1-{max_count}): ").strip()
+
+        if text == "":
+            print(f"⚠️ 입력이 비어 있습니다. 1-{max_count} 사이의 숫자를 입력하세요.")
+            continue
+
+        if not text.isdigit():
+            print(f"⚠️ 잘못된 입력입니다. 1-{max_count} 사이의 숫자를 입력하세요.")
+            continue
+
+        number = int(text)
+        if number < 1 or number > max_count:
+            print(f"⚠️ 잘못된 입력입니다. 1-{max_count} 사이의 숫자를 입력하세요.")
+            continue
+
+        return number
+
+    
+
+def get_quiz_number(message, max_count):
+    while True:
+        text = input(f"{message} (1-{max_count}): ").strip()
 
         if text == "":
             print(f"⚠️ 입력이 비어 있습니다. 1-{max_count} 사이의 숫자를 입력하세요.")
@@ -249,6 +271,18 @@ class QuizGame:
             print(f"[{number}] {quiz.question}")
         print("-" * 40)
 
+    def delete_quiz(self):
+        if len(self.quizzes) == 0:
+            print("⚠️ 삭제할 퀴즈가 없습니다.")
+            return
+
+        self.show_quiz_list()
+        number = get_quiz_number("삭제할 퀴즈 번호를 입력하세요", len(self.quizzes))
+
+        removed = self.quizzes.pop(number - 1)
+        self.save_state()
+        print(f"\n🗑️ 삭제되었습니다: {removed.question}")
+
     def show_best_score(self):
         if self.best_score is None:
             print("\n⚠️ 아직 퀴즈를 풀지 않았습니다.")
@@ -271,6 +305,8 @@ class QuizGame:
             elif choice == 4:
                 self.show_best_score()
             elif choice == 5:
+                self.delete_quiz()
+            elif choice == 6:
                 self.save_state()
                 print("프로그램을 종료합니다. 안녕히 가세요!")
                 break
